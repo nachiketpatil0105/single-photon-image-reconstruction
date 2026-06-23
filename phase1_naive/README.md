@@ -1,59 +1,115 @@
 # Phase 1 — Naive Summation Baseline
 
-> No learning involved. Sum photon frames across a burst to recover scene intensity.
+> No learning. No weights. Just physics — sum enough photon frames and the scene emerges.
 
 ← [Back to main repo](../README.md) | [Phase 2 →](../phase2_baseline_cnn/README.md)
 
 ---
 
-## 📌 Overview
+## What This Phase Is About
 
-Before training any model, we establish a **parameter-free baseline**. The Single Photon Camera (SPC) captures binary frames — each pixel records whether a photon was detected. Summing many such frames gives an approximation of the true scene intensity.
+Before training any model, we need to know what we're trying to beat. This phase builds a
+parameter-free baseline using the simplest possible idea: if you stack enough binary
+single-photon frames on top of each other and sum them, the random noise cancels out and
+the actual scene starts to appear.
 
-This phase sweeps over different **batch sizes** (number of frames summed) to see how reconstruction quality scales with more photon data.
+There is no training, no loss function, no optimization. The only question this phase
+answers is — **how good can you get with just summation, and how many frames do you need?**
+That number becomes the floor every model in Phase 2 onwards has to clear.
 
 ---
 
-## 🔧 How It Works
+## How It Works
+
+A single-photon camera doesn't capture a normal image. Each frame is binary — every pixel
+is either 0 (no photon detected) or 1 (photon detected). A single frame looks like random
+noise. But photons arrive more often at brighter parts of the scene, so if you sum thousands
+of frames, the bright regions accumulate higher counts and the image gradually reveals itself.
+
+The data is stored as bit-packed `.npy` files with shape `(1024, H, W, 100, 3)`:
+- `1024` — total photon frames available
+- `H, W` — spatial resolution (800 × 800)
+- `100` — packed temporal bins per pixel
+- `3` — RGB channels
+
+The reconstruction pipeline is four steps:
 
 ```
-Input: .npy file — shape (1024, H, W, 100, 3)
-       │
-       ├── Memory-map the file  (no full RAM load)
-       ├── Slice last B frames  (B = 16 … 1024)
-       ├── Unpack bit-packed bins  (np.unpackbits)
-       └── Sum across frames → normalize to [0, 1]
-              │
-              ▼
-Output: Reconstructed image — shape (800, 800, 3)
+Load .npy with memory-map   →   Slice last B frames   →   Unpack bits   →   Sum + Normalize
 ```
 
-No convolutions. No weights. Just physics.
+We experiment with different values of B (called batch size) from 16 to 1024 to see how
+quality scales with the number of frames used.
 
 ---
 
-## 📂 Files
+## Code Walkthrough
 
-| File | Description |
-|------|-------------|
-| `naive_reconstruction.py` | Full script: data loading, evaluation, plots, JSON export |
-| `results/metrics.json` | All RMSE / PSNR / SSIM numbers across scenes and batch sizes |
-| `results/comparison_*.png` | Ground Truth vs Worst vs Best panels per scene |
-| `results/metric_curves.png` | PSNR & SSIM vs batch size across all scenes |
+**`naive_reconstruction.py`** runs the entire experiment end-to-end. Here is what each
+part does:
+
+**`rmse`, `psnr`, `ssim_score`**
+Three standard image quality metrics. RMSE measures raw pixel error. PSNR converts that
+into decibels — a more interpretable scale where higher means better. SSIM measures
+perceptual similarity (structure, contrast, luminance) rather than just per-pixel difference.
+All three are computed against the ground truth PNG for each reconstruction.
+
+**`reconstruct(npy_path, batch_size)`**
+The core function. It memory-maps the `.npy` file so the full gigabyte-scale data never
+loads into RAM. It then slices the last `batch_size` frames, calls `np.unpackbits` to
+reverse the bit-packing, sums the photon counts across all frames for each pixel, and
+normalizes the result to `[0, 1]`. The output is a float32 image ready for metric
+computation or visualization.
+
+**`evaluate_scene(npy_path, gt_path)`**
+Loops over every batch size in `BATCH_SIZES`, calls `reconstruct` for each, computes all
+three metrics against the ground truth, and stores everything in a dictionary. Also prints
+a live progress line per batch so you can see results as they come in.
+
+**`save_comparison(metrics, recons, gt, scene_name)`**
+Picks the worst reconstruction (highest RMSE) and the best (highest SSIM) and plots them
+side by side with the ground truth in a 3-panel figure. Saves it as a PNG to `results/`.
+This is the main visual for the README — it makes it immediately obvious how much quality
+difference there is between low and high frame counts.
+
+**`save_metric_curves(all_metrics)`**
+Plots PSNR and SSIM against batch size for all three scenes on a log-scale x-axis. This
+chart tells the story of where diminishing returns kick in — it's the most important
+analytical output of this phase.
+
+**`print_summary(all_metrics)`**
+Prints a clean table to the terminal with all metrics across all scenes and batch sizes.
+Also saves everything to `results/metrics.json` for reference in later phases.
 
 ---
 
-## ▶️ Usage
+## Running It
 
 ```bash
+pip install numpy matplotlib imageio scikit-image
 python naive_reconstruction.py
 ```
 
-Update the `SCENES` dict at the top of the file if your dataset path differs.
+Before running, update the `SCENES` dictionary at the top of the script to point to your
+local dataset paths. Everything else runs automatically.
 
 ---
 
-## 📊 Results
+## Output Files
+
+After running, the `results/` folder will contain:
+
+| File | What it shows |
+|------|--------------|
+| `comparison_bathroom1.png` | Ground Truth vs Worst vs Best — bathroom scene |
+| `comparison_attic.png` | Ground Truth vs Worst vs Best — attic scene |
+| `comparison_bedroom1.png` | Ground Truth vs Worst vs Best — bedroom scene |
+| `metric_curves.png` | PSNR and SSIM vs batch size across all three scenes |
+| `metrics.json` | All numeric results in JSON format |
+
+---
+
+## Results
 
 ### bathroom1
 
@@ -93,7 +149,7 @@ Update the `SCENES` dict at the top of the file if your dataset path differs.
 
 ---
 
-## 🖼️ Visual Results
+## Visual Results
 
 ![Metric curves](results/metric_curves.png)
 
@@ -103,12 +159,33 @@ Update the `SCENES` dict at the top of the file if your dataset path differs.
 
 ---
 
-## 💡 Key Takeaways
+## Observations
 
-- **bathroom1 & bedroom1** improve steadily with more frames — PSNR peaks at 1024 and 256 respectively.
-- **attic** peaks in PSNR at batch=256 then drops slightly — it is a brighter scene that saturates faster with more frames, but SSIM still climbs to 1024.
-- Even at the best batch size, PSNR stays below **21.6 dB** and SSIM below **0.46** — summing alone cannot recover sharp edges or fine texture.
-- This sets the performance floor all learned models in Phases 2–4 must beat.
+**More frames always helps structurally, but not always metrically.**
+SSIM climbs consistently across all three scenes as batch size increases — the structure
+and contrast of the image genuinely improve with more frames. But PSNR tells a different
+story depending on the scene.
+
+**Scene brightness matters a lot.**
+`bathroom1` is a relatively dark indoor scene — PSNR improves steadily all the way to
+batch=1024, because it needs many frames just to get enough signal above the noise floor.
+`attic` and `bedroom1` both peak in PSNR around batch=256, then actually decline slightly
+at 512 and 1024. In brighter or more uniformly lit scenes, accumulating too many frames
+causes bright regions to dominate the normalization, which can hurt per-pixel accuracy
+even as the overall structure looks better to the eye.
+
+**The gap between PSNR and SSIM at high batch sizes is meaningful.**
+At batch=1024, SSIM is still climbing while PSNR has levelled off or dropped. This tells
+us that the reconstructions are becoming more structurally similar to the ground truth
+(SSIM), but the pixel-level intensity values are drifting (PSNR). Summation recovers
+scene structure well but cannot reproduce precise intensities — which is exactly the
+limitation a learned model in Phase 2 is designed to fix.
+
+**The ceiling is low.**
+Even at best, PSNR stays under 21.6 dB and SSIM under 0.46 across all scenes. Fine edges,
+textures, and low-frequency colour gradients remain blurry regardless of how many frames
+are used. This is the fundamental limit of summation without any learned prior — and it
+sets a clear, honest target for the CNN in Phase 2.
 
 ---
 
