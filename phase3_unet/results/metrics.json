@@ -1,0 +1,36 @@
+{
+  "test_results": [
+    {
+      "sample": 0,
+      "scene": "sunny-room",
+      "PSNR": 30.6745403780138,
+      "SSIM": 0.9312512278556824
+    },
+    {
+      "sample": 1,
+      "scene": "tv-couch",
+      "PSNR": 34.76120186669629,
+      "SSIM": 0.9091430306434631
+    },
+    {
+      "sample": 2,
+      "scene": "ultramodern",
+      "PSNR": 31.22803203741475,
+      "SSIM": 0.8596145510673523
+    },
+    {
+      "sample": 3,
+      "scene": "white-room",
+      "PSNR": 34.66010169243964,
+      "SSIM": 0.9479660987854004
+    },
+    {
+      "sample": 4,
+      "scene": "wooden-staircase",
+      "PSNR": 31.77372095935061,
+      "SSIM": 0.7615680694580078
+    }
+  ],
+  "avg_psnr": 32.61951938678302,
+  "avg_ssim": 0.8819085955619812
+}
