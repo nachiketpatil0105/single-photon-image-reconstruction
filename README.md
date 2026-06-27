@@ -13,26 +13,38 @@ from a naive summation baseline to a ResUNet with Guided Attention Gates.
 
 Single-photon cameras detect individual photons — each frame is binary (0 or 1 per pixel)
 and dominated by shot noise. Given a burst of such frames, the task is to reconstruct the
-clean scene.
-
----
-
-## Phase 2 vs Phase 3 — same scene, same model scale
-
-![Phase 2 vs Phase 3](assets/phase2_vs_phase3.png)
+clean scene behind the noise.
 
 ---
 
 ## Results
 
+Evaluated on 3 held-out scenes across all phases.
+
 | Phase | Model | Avg PSNR | Avg SSIM | Params |
 |:-----:|-------|:--------:|:--------:|-------:|
-| 1 | Naive Summation | 21.55 dB | 0.4547 | — |
-| 2 | Baseline CNN | 28.90 dB | 0.8701 | ~1.7M |
-| 3 | UNet | 32.62 dB | 0.8819 | ~31M |
+| 1 | Naive Summation | 13.32 dB | 0.2783 | — |
+| 2 | Baseline CNN | 26.47 dB | 0.7967 | ~1.7M |
+| 3 | UNet | 30.80 dB | 0.8371 | ~31M |
 | **4** | **ResUNet + Attention** | **34.00 dB** | **0.8833** | ~237M |
 
-**Total: +12.45 dB PSNR over the naive baseline.**
+**Total: +20.68 dB PSNR and +0.605 SSIM over the naive baseline.**
+
+### Per-scene breakdown
+
+| Scene | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
+|-------|:-------:|:-------:|:-------:|:-------:|
+| 000015 | 10.67 dB / 0.141 | 20.92 dB / 0.596 | 24.40 dB / 0.656 | 28.21 dB / 0.756 |
+| 000023 | 12.58 dB / 0.317 | 27.59 dB / 0.897 | 33.86 dB / 0.926 | 36.35 dB / 0.944 |
+| 000030 | 16.71 dB / 0.377 | 30.91 dB / 0.896 | 34.13 dB / 0.929 | 37.43 dB / 0.950 |
+
+---
+
+## Visual Progression
+
+Same 3 scenes evaluated across all four phases.
+
+![Phase progression](assets/phase_progression.png)
 
 ---
 
@@ -71,8 +83,8 @@ Encoder-decoder with skip connections. Upgraded training: Charbonnier + MS-SSIM 
 loss, cosine annealing, mixed precision, augmentation, train/val/test split.
 
 **[Phase 4 — ResUNet + Attention](./phase4_resunet_attention/README.md)**
-Residual blocks, 5-level encoder, double bottleneck at 2048ch, guided attention gates on
-every skip, deep supervision, edge loss. 1850 training samples on a dedicated GPU server.
+Residual blocks, 5-level encoder, double bottleneck, guided attention gates on every skip,
+deep supervision, edge loss. 1850 training samples on a dedicated GPU server.
 
 ---
 

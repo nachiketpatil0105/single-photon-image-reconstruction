@@ -158,3 +158,18 @@ motivating the attention gates in Phase 4.
 ---
 
 ← [Phase 2](../phase2_baseline_cnn/README.md) | [Back](../README.md) | [Phase 4 →](../phase4_resunet_attention/README.md)
+
+---
+
+## Results on Common Evaluation Scenes
+
+| Scene | PSNR ↑ | SSIM ↑ |
+|:-----:|:------:|:------:|
+| 000015 | 24.40 dB | 0.6561 |
+| 000023 | 33.86 dB | 0.9257 |
+| 000030 | 34.13 dB | 0.9294 |
+| **Avg** | **30.80 dB** | **0.8371** |
+
+| 000015 | 000023 | 000030 |
+|:------:|:------:|:------:|
+| ![](results/new_samples/unet_000015.png) | ![](results/new_samples/unet_000023.png) | ![](results/new_samples/unet_000030.png) |

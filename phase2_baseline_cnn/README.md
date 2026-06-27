@@ -117,3 +117,18 @@ complex scenes — exactly what UNet's skip connections are designed to fix.
 ---
 
 ← [Phase 1](../phase1_naive/README.md) | [Back](../README.md) | [Phase 3 →](../phase3_unet/README.md)
+
+---
+
+## Results on Common Evaluation Scenes
+
+| Scene | PSNR ↑ | SSIM ↑ |
+|:-----:|:------:|:------:|
+| 000015 | 20.92 dB | 0.5964 |
+| 000023 | 27.59 dB | 0.8974 |
+| 000030 | 30.91 dB | 0.8962 |
+| **Avg** | **26.47 dB** | **0.7967** |
+
+| 000015 | 000023 | 000030 |
+|:------:|:------:|:------:|
+| ![](results/new_samples/cnn_000015.png) | ![](results/new_samples/cnn_000023.png) | ![](results/new_samples/cnn_000030.png) |

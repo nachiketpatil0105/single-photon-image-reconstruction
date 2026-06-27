@@ -110,3 +110,22 @@ summation without a learned prior, and the target Phase 2 onwards must beat.
 ---
 
 ← [Back](../README.md) | [Phase 2 →](../phase2_baseline_cnn/README.md)
+
+---
+
+## Results on Common Evaluation Scenes
+
+These 3 scenes are used across all phases for direct comparison.
+
+| Scene | Best Batch | PSNR ↑ | SSIM ↑ |
+|:-----:|:----------:|:------:|:------:|
+| 000015 | 128 | 10.67 dB | 0.1409 |
+| 000023 | 512 | 12.58 dB | 0.3174 |
+| 000030 | 1024 | 16.71 dB | 0.3765 |
+| **Avg** | | **13.32 dB** | **0.2783** |
+
+![Metric curves — new scenes](results/metric_curves_new_samples.png)
+
+| 000015 | 000023 | 000030 |
+|:------:|:------:|:------:|
+| ![](results/comparison_000015.png) | ![](results/comparison_000023.png) | ![](results/comparison_000030.png) |
