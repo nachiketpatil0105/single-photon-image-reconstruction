@@ -2,9 +2,16 @@
 
 ← [Phase 2](../phase2_baseline_cnn/README.md) | [Back](../README.md) | [Phase 4 ->](../phase4_resunet_attention/README.md)
 
-Encoder-decoder with skip connections. The encoder compresses spatial resolution to build
-global scene understanding; skip connections feed spatial detail directly to the decoder
-at each level. Also introduces a significantly upgraded training pipeline over Phase 2.
+> **What this phase shows:** Architectural reasoning - identifying the specific failure
+> mode of a flat CNN (no multi-scale context, no spatial detail preservation), selecting
+> the right architecture to fix it, and upgrading the entire training pipeline at the
+> same time. +4.33 dB over Phase 2.
+
+The flat CNN in Phase 2 had no mechanism to reason about image structure at different
+scales. UNet's encoder-decoder architecture fixes this directly: the encoder builds
+global context by compressing resolution, and skip connections route spatial detail from
+each encoder level straight to its decoder counterpart - so fine texture and sharp edges
+are never discarded mid-network.
 
 ---
 
@@ -15,7 +22,7 @@ at each level. Also introduces a significantly upgraded training pipeline over P
 | Architecture | Flat CNN, single scale | UNet, 3 encoder levels + bottleneck |
 | Skip connections | None | Encoder -> decoder at each level |
 | Parameters | ~1.7M | ~31M |
-| Loss | L1 + SSIM | Charbonnier + MS-SSIM + VGG |
+| Loss | L1 + SSIM | Charbonnier + MS-SSIM + VGG perceptual |
 | LR schedule | Fixed 1e-4 | Cosine annealing (1e-4 -> 1e-6) |
 | Precision | FP32 | Mixed precision (FP16) |
 | Augmentation | None | Flips, rotations, 512×512 random crop |
@@ -47,13 +54,18 @@ Upsampling via learned `ConvTranspose2d`. ~31M parameters.
 Loss = 0.25 × Charbonnier  +  0.50 × (1 − MS-SSIM)  +  0.25 × VGG Perceptual
 ```
 
-**Charbonnier** - smooth L1, differentiable at zero, more stable near convergence.
+Each component targets a different failure mode of simpler losses:
 
-**MS-SSIM** - structural similarity at multiple scales; more robust for scenes with both
-large surfaces and fine texture.
+**Charbonnier** replaces L1 with `sqrt((pred−target)² + ε²)` - differentiable at zero,
+numerically stable near convergence, less prone to outlier-driven gradient spikes.
 
-**VGG Perceptual** - L1 distance between VGG16 feature maps at relu1_2 / relu2_2 / relu3_3
-(weights 0.2 / 0.3 / 0.5). Pushes the model toward perceptually sharp outputs.
+**MS-SSIM** (dominant weight at 0.50) evaluates structural similarity at multiple scales
+simultaneously, making it more robust than single-scale SSIM on scenes that contain both
+large flat surfaces and fine texture.
+
+**VGG Perceptual** computes L1 distance between frozen VGG16 feature maps at three depths
+(weights: 0.2 / 0.3 / 0.5). This pushes reconstructions toward perceptually sharp outputs
+that pixel-wise losses alone cannot achieve.
 
 ---
 
@@ -105,8 +117,6 @@ Update `DATA_ROOT` at the top. Best model saved to `checkpoints/best_model.pth`.
 
 ### Common evaluation scenes (000015, 000023, 000030)
 
-Used across all phases for direct comparison.
-
 | Scene | PSNR ↑ | SSIM ↑ |
 |:-----:|:------:|:------:|
 | 000015 | 24.40 dB | 0.6561 |
@@ -145,19 +155,24 @@ Used across all phases for direct comparison.
 
 ---
 
-## Observations
+## Key Findings
 
-Skip connections delivered the largest gains on the hardest scenes. On the common
-evaluation scenes, ultramodern (a scene with complex geometry and fine texture) gained
-most from multi-scale feature reuse.
+**Skip connections delivered the biggest gains on the hardest scenes.** The common
+evaluation scenes gained +4.33 dB on average, with the most complex scene (000015)
+gaining +3.48 dB - multi-scale feature reuse helps most where structure is hardest to
+recover.
 
-Train and val curves stay close throughout (final gap: 0.0002 SSIM), meaning augmentation
-was effective despite 31M parameters. Val PSNR slightly exceeds train PSNR at the end -
-training uses 512×512 crops which give less context per sample than full 800×800 val images.
+**The training pipeline is well-controlled.** Train and val curves stay within 0.0002
+SSIM of each other at the end of training, confirming that augmentation effectively
+prevents a 31M-parameter model from overfitting on a small dataset. Val PSNR slightly
+exceeds train PSNR because training uses 512×512 crops while validation uses the full
+800×800 image.
 
-`wooden-staircase` has the lowest SSIM at 0.7616 despite decent PSNR (31.77 dB).
-Repetitive fine texture is hard for uniform skip-concatenation to handle - motivating the
-attention gates in Phase 4.
+**One failure mode motivates Phase 4.** `wooden-staircase` achieves the lowest SSIM
+(0.7616) despite reasonable PSNR (31.77 dB). Repetitive fine texture - regular stair
+patterns - exposes the weakness of raw skip concatenation: all encoder features are
+weighted equally, so the decoder cannot prioritize the spatial locations that matter
+most. Attention gates in Phase 4 address this directly.
 
 ---
 
