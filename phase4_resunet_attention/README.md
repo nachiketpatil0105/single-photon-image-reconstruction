@@ -146,8 +146,11 @@ Loss = 0.5  × Charbonnier
 | `ConvBlock` | Two Conv3×3 + GroupNorm + SiLU with residual projection |
 | `GuidedAttentionGate` | Computes spatial attention from skip + decoder gate, filters skip |
 | `Down` / `Up` | MaxPool+ConvBlock / ConvTranspose+AttentionGate+ConvBlock |
-| `SimCNN` | Full model - returns `(main, aux)` during training, `main` during eval |
-| `compute_psnr(pred, target)` | Inline PSNR from MSE, used during training loop |
+| `ResUNetAttention` | Full model - returns `(main, aux)` during training, `main` during eval |
+| `compute_psnr(pred, target)` | Inline PSNR from MSE, used during training and evaluation |
+| `save_comparison(...)` | 3-panel figure: Input \| Model Output \| Ground Truth |
+| `evaluate(...)` | Loads best checkpoint, runs inference on test set, saves figures and metrics.json |
+| `print_summary(results)` | Logs per-sample and average PSNR/SSIM to terminal and log file |
 
 ---
 

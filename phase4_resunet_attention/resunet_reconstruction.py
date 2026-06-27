@@ -1,7 +1,11 @@
 import numpy as np
 import csv
+import json
 import random
 import logging
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 from pathlib import Path
 
 import torch
@@ -13,6 +17,8 @@ from torch.utils.data import Dataset, DataLoader
 from torch.amp import GradScaler, autocast
 from torchmetrics.image import StructuralSimilarityIndexMeasure as SSIM
 from torchmetrics.image import MultiScaleStructuralSimilarityIndexMeasure as MSSSIM
+from skimage.metrics import peak_signal_noise_ratio as psnr_sk
+from skimage.metrics import structural_similarity as ssim_sk
 from torch.utils.tensorboard import SummaryWriter
 
 # Update these paths to match your environment
@@ -25,8 +31,9 @@ CKPT_DIR = OUTPUT_DIR / "checkpoints"
 LOG_DIR = OUTPUT_DIR / "tensorboard"
 LOG_CSV = OUTPUT_DIR / "training_log.csv"
 LOG_FILE = OUTPUT_DIR / "training.log"
+RESULTS_DIR = OUTPUT_DIR / "results"
 
-for d in [CKPT_DIR, LOG_DIR]:
+for d in [CKPT_DIR, LOG_DIR, RESULTS_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(
@@ -82,6 +89,22 @@ for npy_folder, img_folder in zip(
     train_png.extend(pngs)
 
 log.info(f"Total training samples: {len(train_npy)}")
+
+# Collect test .pt file paths from test_* folders
+test_npy = []
+test_png = []
+for npy_folder, img_folder in zip(
+    sorted(DATA_DIR_NPY.glob("test_*")),
+    sorted(DATA_DIR_IMG.glob("test_*")),
+):
+    npys = sorted(npy_folder.rglob("*.pt"))
+    pngs = sorted(img_folder.rglob("*.pt"))
+    if len(npys) == 0:
+        continue
+    test_npy.extend(npys)
+    test_png.extend(pngs)
+
+log.info(f"Total test samples: {len(test_npy)}")
 
 
 class SPCDataset(Dataset):
@@ -235,7 +258,7 @@ class Up(nn.Module):
         return self.conv(torch.cat([x_up, skip_gated], dim=1))
 
 
-class SimCNN(nn.Module):
+class ResUNetAttention(nn.Module):
     """ResUNet with Guided Attention Gates for single-photon image reconstruction."""
 
     def __init__(self):
@@ -288,6 +311,88 @@ def compute_psnr(pred, target, data_range=1.0):
     return float("inf") if mse == 0 else 10.0 * np.log10((data_range ** 2) / mse)
 
 
+def save_comparison(input_img, pred_img, target_img, idx, scene_name, p, s):
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    fig.suptitle(f"ResUNet+Attention — {scene_name}", fontsize=13, fontweight="bold")
+    for ax, (img, title, sub) in zip(axes, [
+        (input_img[:, :, 0:3], "Input (SPC)", ""),
+        (pred_img, "Model Output", f"PSNR={p:.2f} dB  SSIM={s:.4f}"),
+        (target_img, "Ground Truth", ""),
+    ]):
+        ax.imshow(np.clip(img, 0, 1))
+        ax.set_title(title, fontsize=11, fontweight="bold")
+        ax.set_xlabel(sub, fontsize=9)
+        ax.axis("off")
+    plt.tight_layout()
+    path = RESULTS_DIR / f"comparison_sample{idx}_{scene_name}.png"
+    fig.savefig(path, dpi=150, bbox_inches="tight")
+    log.info(f"  Saved → {path}")
+    plt.close()
+
+
+def print_summary(results):
+    log.info(f"\n{'Sample':<8} {'Scene':<24} {'PSNR (dB)':>10} {'SSIM':>8}")
+    log.info("─" * 55)
+    for r in results:
+        log.info(f"{r['sample']:<8} {r['scene']:<24} {r['PSNR']:>10.2f} {r['SSIM']:>8.4f}")
+    avg_p = sum(r["PSNR"] for r in results) / len(results)
+    avg_s = sum(r["SSIM"] for r in results) / len(results)
+    log.info("─" * 55)
+    log.info(f"{'Average':<8} {'':<24} {avg_p:>10.2f} {avg_s:>8.4f}")
+
+
+def evaluate(model, test_npy_paths, test_png_paths, ssim_fn, msssim_fn):
+    """Run inference on test set, compute metrics, save comparison figures."""
+    log.info("\nRunning evaluation on test set...")
+    model.eval()
+    results = []
+    total_psnr = total_ssim = total_msssim = 0.0
+
+    with torch.no_grad():
+        for i, (npy_path, png_path) in enumerate(zip(test_npy_paths, test_png_paths)):
+            x = torch.load(npy_path, weights_only=True)
+            x = x[-96:, :, :].unsqueeze(0).to(DEVICE)
+            target = torch.load(png_path, weights_only=True).unsqueeze(0).to(DEVICE)
+
+            with autocast(device_type="cuda", dtype=torch.bfloat16):
+                pred = model(x)
+            pred = torch.clamp(pred, 0.0, 1.0)
+
+            ssim_s = ssim_fn(pred.float(), target.float()).item()
+            msssim_s = msssim_fn(pred.float(), target.float()).item()
+            psnr_s = compute_psnr(pred.float(), target.float())
+            total_ssim += ssim_s
+            total_msssim += msssim_s
+            total_psnr += psnr_s
+
+            pred_np = pred.squeeze().cpu().float().numpy().transpose(1, 2, 0)
+            target_np = target.squeeze().cpu().float().numpy().transpose(1, 2, 0)
+            input_np = x.squeeze().cpu().float().numpy().transpose(1, 2, 0)
+
+            p = psnr_sk(target_np, pred_np, data_range=1.0)
+            s = ssim_sk(target_np, pred_np, channel_axis=2, data_range=1.0)
+            scene = Path(png_path).parent.name
+            results.append({"sample": i, "scene": scene, "PSNR": float(p), "SSIM": float(s)})
+            log.info(f"Test {i} ({scene})  PSNR: {psnr_s:.2f} dB  SSIM: {ssim_s:.4f}  MS-SSIM: {msssim_s:.4f}")
+
+            save_comparison(input_np, pred_np, target_np, i, scene, p, s)
+
+    n = len(test_npy_paths)
+    log.info(f"\nAverage PSNR   : {total_psnr / n:.2f} dB")
+    log.info(f"Average SSIM   : {total_ssim / n:.4f}")
+    log.info(f"Average MS-SSIM: {total_msssim / n:.4f}")
+    print_summary(results)
+
+    with open(RESULTS_DIR / "metrics.json", "w") as f:
+        json.dump({
+            "test_results": results,
+            "avg_psnr": total_psnr / n,
+            "avg_ssim": total_ssim / n,
+            "avg_msssim": total_msssim / n,
+        }, f, indent=2)
+    log.info(f"Metrics saved → {RESULTS_DIR / 'metrics.json'}")
+
+
 if __name__ == "__main__":
     train_dataset = SPCDataset(train_npy, train_png)
     train_loader = DataLoader(
@@ -297,7 +402,7 @@ if __name__ == "__main__":
     )
     log.info(f"Train loader: {len(train_loader)} batches")
 
-    model = SimCNN().to(DEVICE)
+    model = ResUNetAttention().to(DEVICE)
     model = torch.compile(model)
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
     scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
@@ -479,3 +584,14 @@ if __name__ == "__main__":
     )
     writer.close()
     log.info(f"Training complete. Best train SSIM: {best_train_ssim:.4f}")
+
+    # Load best checkpoint and evaluate on test set
+    log.info("\nLoading best checkpoint for test evaluation...")
+    ckpt = torch.load(CKPT_DIR / "best_model.pth", map_location=DEVICE)
+    model.load_state_dict(ckpt["model_state_dict"])
+    log.info(f"Loaded from epoch {ckpt['epoch']}  (best train SSIM {ckpt['best_train_ssim']:.4f})")
+
+    if len(test_npy) > 0:
+        evaluate(model, test_npy, test_png, ssim_metric, msssim_metric)
+    else:
+        log.info("No test_* folders found — skipping evaluation.")
