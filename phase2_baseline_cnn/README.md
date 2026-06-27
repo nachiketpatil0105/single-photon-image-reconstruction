@@ -4,7 +4,7 @@
 
 First trained model. All 128 SPC frames are stacked into 384 input channels and passed
 through a flat 8-layer CNN at full resolution. No downsampling, no skip connections.
-This establishes a learned baseline for Phase 3 to improve on.
+Establishes a learned baseline for Phase 3 to improve on.
 
 ---
 
@@ -56,7 +56,7 @@ L1 alone produces blurry outputs — SSIM adds structural supervision. Adam, lr=
 | `load_input(npy_path)` | Loads SPC data, unpacks bits, reshapes to (384, 800, 800), normalizes |
 | `load_target(png_path)` | Loads ground truth PNG as (3, 800, 800) float in [0, 1] |
 | `SimCNN` | The model — 8 conv layers, expand then contract, Sigmoid output |
-| `train(...)` | Training loop — combined loss, backprop, epoch loss history |
+| `train(...)` | Training loop — combined loss, backprop, returns epoch loss history |
 | `evaluate(...)` | Inference on test set, scikit-image PSNR/SSIM, saves comparison figures |
 | `save_loss_curve(epoch_losses)` | Plots loss vs epoch |
 
@@ -69,58 +69,15 @@ pip install torch torchvision torchmetrics scikit-image matplotlib Pillow
 python cnn_reconstruction.py
 ```
 
-Update `DATA_ROOT` at the top. Outputs saved to `results/`.
+Update `DATA_ROOT` at the top. Model saved to `results/cnn_model.pth`.
 
 ---
 
 ## Results
 
-| Sample | Scene | PSNR ↑ | SSIM ↑ |
-|:------:|-------|:------:|:------:|
-| 0 | sunny-room | 26.70 dB | 0.8951 |
-| 1 | tv-couch | 31.98 dB | 0.8848 |
-| 2 | ultramodern | 26.47 dB | 0.8207 |
-| 3 | white-room | 30.53 dB | 0.9120 |
-| 4 | wooden-staircase | 28.81 dB | 0.8382 |
-| **Avg** | | **28.90 dB** | **0.8701** |
+### Common evaluation scenes (000015, 000023, 000030)
 
-**vs Phase 1:** +7.35 dB PSNR, +0.42 SSIM
-
----
-
-## Visual Results
-
-![Loss curve](results/loss_curve.png)
-
-| Scene | Comparison |
-|-------|-----------|
-| sunny-room | ![](results/comparison_sample0_sunny-room.png) |
-| tv-couch | ![](results/comparison_sample1_tv-couch.png) |
-| ultramodern | ![](results/comparison_sample2_ultramodern.png) |
-| white-room | ![](results/comparison_sample3_white-room.png) |
-| wooden-staircase | ![](results/comparison_sample4_wooden-staircase.png) |
-
----
-
-## Observations
-
-The jump from Phase 1 is large (+7.35 dB) — preserving all 128 frames as separate channels
-and learning to combine them far outperforms any fixed summation rule.
-
-The loss curve is still declining at epoch 50, meaning the model hasn't fully converged.
-These numbers are a lower bound on what this architecture can achieve.
-
-PSNR varies 5.5 dB across scenes (26.47 to 31.98) while SSIM stays above 0.82 everywhere.
-The network recovers structure well but struggles with precise per-pixel intensity on
-complex scenes — exactly what UNet's skip connections are designed to fix.
-
----
-
-← [Phase 1](../phase1_naive/README.md) | [Back](../README.md) | [Phase 3 →](../phase3_unet/README.md)
-
----
-
-## Results on Common Evaluation Scenes
+Used across all phases for direct comparison.
 
 | Scene | PSNR ↑ | SSIM ↑ |
 |:-----:|:------:|:------:|
@@ -129,6 +86,50 @@ complex scenes — exactly what UNet's skip connections are designed to fix.
 | 000030 | 30.91 dB | 0.8962 |
 | **Avg** | **26.47 dB** | **0.7967** |
 
+**vs Phase 1:** +13.15 dB PSNR, +0.518 SSIM
+
 | 000015 | 000023 | 000030 |
 |:------:|:------:|:------:|
 | ![](results/new_samples/cnn_000015.png) | ![](results/new_samples/cnn_000023.png) | ![](results/new_samples/cnn_000030.png) |
+
+---
+
+### Original test scenes (sunny-room, tv-couch, ultramodern, white-room, wooden-staircase)
+
+| Sample | Scene | PSNR ↑ | SSIM ↑ |
+|:------:|-------|:------:|:------:|
+| 0 | sunny-room | 27.21 dB | 0.8922 |
+| 1 | tv-couch | 32.09 dB | 0.8851 |
+| 2 | ultramodern | 27.57 dB | 0.8202 |
+| 3 | white-room | 31.20 dB | 0.9102 |
+| 4 | wooden-staircase | 29.60 dB | 0.8442 |
+| **Avg** | | **29.54 dB** | **0.8704** |
+
+![Loss curve](results/loss_curve.png)
+
+| sunny-room | tv-couch | ultramodern |
+|:----------:|:--------:|:-----------:|
+| ![](results/comparison_sample0_sunny-room.png) | ![](results/comparison_sample1_tv-couch.png) | ![](results/comparison_sample2_ultramodern.png) |
+
+| white-room | wooden-staircase |
+|:----------:|:----------------:|
+| ![](results/comparison_sample3_white-room.png) | ![](results/comparison_sample4_wooden-staircase.png) |
+
+---
+
+## Observations
+
+The jump from Phase 1 is large (+13.15 dB on common scenes) — preserving all 128 frames
+as separate channels and learning to combine them far outperforms any fixed summation rule.
+
+The loss curve is still declining at epoch 50, meaning the model hasn't fully converged.
+These numbers are a lower bound on what this architecture can achieve.
+
+PSNR varies significantly across scenes — 000015 scores only 20.92 dB while 000030 reaches
+30.91 dB. The flat CNN processes every spatial location identically with no mechanism for
+multi-scale reasoning, which hurts on complex scenes with fine texture and challenging
+lighting. That is exactly what UNet's skip connections address in Phase 3.
+
+---
+
+← [Phase 1](../phase1_naive/README.md) | [Back](../README.md) | [Phase 3 →](../phase3_unet/README.md)

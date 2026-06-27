@@ -152,24 +152,27 @@ Training resumes automatically if `checkpoints/best_model.pth` exists.
 
 ## Results
 
-Evaluated on 3 held-out samples using the epoch 70 checkpoint (best train SSIM = 0.9145).
+### Common evaluation scenes (000015, 000023, 000030)
 
-| Sample | PSNR ↑ | SSIM ↑ |
-|:------:|:------:|:------:|
+Same 3 scenes used across all phases for direct comparison. Evaluated using the
+epoch 70 checkpoint (best train SSIM = 0.9145).
+
+| Scene | PSNR ↑ | SSIM ↑ |
+|:-----:|:------:|:------:|
 | 000015 | 28.21 dB | 0.7561 |
 | 000023 | 36.35 dB | 0.9442 |
 | 000030 | 37.43 dB | 0.9496 |
 | **Avg** | **34.00 dB** | **0.8833** |
 
-**vs Phase 3:** +1.38 dB PSNR, +0.001 SSIM
+**vs Phase 3:** +3.20 dB PSNR, +0.046 SSIM on these scenes
 
-### Full Progression
+### Full Progression (common scenes)
 
 | Phase | Model | Avg PSNR | Avg SSIM |
 |:-----:|-------|:--------:|:--------:|
-| 1 | Naive | 21.55 dB | 0.4547 |
-| 2 | CNN | 28.90 dB | 0.8701 |
-| 3 | UNet | 32.62 dB | 0.8819 |
+| 1 | Naive | 13.32 dB | 0.2783 |
+| 2 | CNN | 26.47 dB | 0.7967 |
+| 3 | UNet | 30.80 dB | 0.8371 |
 | **4** | **ResUNet + Attention** | **34.00 dB** | **0.8833** |
 
 ---

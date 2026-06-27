@@ -17,9 +17,17 @@ clean scene behind the noise.
 
 ---
 
+## Visual Progression
+
+All four phases evaluated on the same three scenes.
+
+![Phase progression](assets/phase_progression.png)
+
+---
+
 ## Results
 
-Evaluated on 3 held-out scenes across all phases.
+Evaluated on 3 held-out scenes common across all phases.
 
 | Phase | Model | Avg PSNR | Avg SSIM | Params |
 |:-----:|-------|:--------:|:--------:|-------:|
@@ -28,23 +36,16 @@ Evaluated on 3 held-out scenes across all phases.
 | 3 | UNet | 30.80 dB | 0.8371 | ~31M |
 | **4** | **ResUNet + Attention** | **34.00 dB** | **0.8833** | ~237M |
 
-**Total: +20.68 dB PSNR and +0.605 SSIM over the naive baseline.**
-
 ### Per-scene breakdown
 
-| Scene | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
-|-------|:-------:|:-------:|:-------:|:-------:|
-| 000015 | 10.67 dB / 0.141 | 20.92 dB / 0.596 | 24.40 dB / 0.656 | 28.21 dB / 0.756 |
-| 000023 | 12.58 dB / 0.317 | 27.59 dB / 0.897 | 33.86 dB / 0.926 | 36.35 dB / 0.944 |
-| 000030 | 16.71 dB / 0.377 | 30.91 dB / 0.896 | 34.13 dB / 0.929 | 37.43 dB / 0.950 |
+| Scene | Phase 1 | Phase 2 | Phase 3 | Phase 4 | Total gain |
+|-------|:-------:|:-------:|:-------:|:-------:|:----------:|
+| Scene A (000015) | 10.67 dB | 20.92 dB | 24.40 dB | 28.21 dB | **+17.54 dB** |
+| Scene B (000023) | 12.58 dB | 27.59 dB | 33.86 dB | 36.35 dB | **+23.77 dB** |
+| Scene C (000030) | 16.71 dB | 30.91 dB | 34.13 dB | 37.43 dB | **+20.72 dB** |
 
----
-
-## Visual Progression
-
-Same 3 scenes evaluated across all four phases.
-
-![Phase progression](assets/phase_progression.png)
+Scene A is the hardest — a dark room with stone wall texture and a colourful painting.
+Scene B and C are well-lit with cleaner structure, where learned models benefit most.
 
 ---
 

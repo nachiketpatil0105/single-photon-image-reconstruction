@@ -34,7 +34,7 @@ frames, and normalize.
 | `evaluate_scene(npy_path, gt_path)` | Runs reconstruction for all batch sizes and computes RMSE, PSNR, SSIM |
 | `save_comparison(...)` | 3-panel figure: Ground Truth \| Worst \| Best reconstruction |
 | `save_metric_curves(all_metrics)` | PSNR and SSIM vs batch size across all scenes |
-| `print_summary(all_metrics)` | Prints a metric table to terminal and saves `metrics.json` |
+| `print_summary(all_metrics)` | Prints metric table to terminal and saves `metrics.json` |
 
 ---
 
@@ -53,41 +53,34 @@ Update the `SCENES` dict at the top of the script with your dataset paths before
 
 ## Results
 
-### bathroom1
+### Common evaluation scenes (000015, 000023, 000030)
 
-| Batch | RMSE ↓ | PSNR ↑ | SSIM ↑ |
-|:-----:|:------:|:------:|:------:|
-| 16 | 0.4957 | 6.10 dB | 0.0459 |
-| 64 | 0.3714 | 8.60 dB | 0.0905 |
-| 256 | 0.2591 | 11.73 dB | 0.1975 |
-| 512 | 0.2181 | 13.23 dB | 0.2904 |
-| **1024** | **0.1723** | **15.27 dB** | **0.3910** |
+Used across all phases for direct comparison. Numbers shown at best batch size per scene.
 
-### attic
+| Scene | Best Batch | RMSE ↓ | PSNR ↑ | SSIM ↑ |
+|:-----:|:----------:|:------:|:------:|:------:|
+| 000015 | 128  | 0.2929 | 10.67 dB | 0.1409 |
+| 000023 | 512  | 0.2349 | 12.58 dB | 0.3174 |
+| 000030 | 1024 | 0.1460 | 16.71 dB | 0.3765 |
+| **Avg** | | | **13.32 dB** | **0.2783** |
 
-| Batch | RMSE ↓ | PSNR ↑ | SSIM ↑ |
-|:-----:|:------:|:------:|:------:|
-| 16 | 0.0982 | 20.16 dB | 0.2977 |
-| 64 | 0.0856 | 21.35 dB | 0.3519 |
-| **256** | **0.0836** | **21.55 dB** | 0.4142 |
-| 512 | 0.0880 | 21.11 dB | 0.4333 |
-| 1024 | 0.0922 | 20.71 dB | **0.4547** |
+![Metric curves — new scenes](results/metric_curves_new_samples.png)
 
-### bedroom1
-
-| Batch | RMSE ↓ | PSNR ↑ | SSIM ↑ |
-|:-----:|:------:|:------:|:------:|
-| 16 | 0.3485 | 9.16 dB | 0.0770 |
-| 64 | 0.2861 | 10.87 dB | 0.1373 |
-| **256** | **0.2511** | **12.00 dB** | 0.2287 |
-| 512 | 0.2517 | 11.98 dB | 0.2868 |
-| 1024 | 0.2678 | 11.44 dB | **0.3627** |
+| 000015 | 000023 | 000030 |
+|:------:|:------:|:------:|
+| ![](results/comparison_000015.png) | ![](results/comparison_000023.png) | ![](results/comparison_000030.png) |
 
 ---
 
-## Visual Results
+### Additional scenes (bathroom1, attic, bedroom1)
 
-![Metric curves](results/metric_curves.png)
+| Scene | Best Batch | PSNR ↑ | SSIM ↑ |
+|:-----:|:----------:|:------:|:------:|
+| bathroom1 | 1024 | 15.27 dB | 0.3910 |
+| attic     | 256  | 21.55 dB | 0.4142 |
+| bedroom1  | 256  | 12.00 dB | 0.2287 |
+
+![Metric curves — original scenes](results/metric_curves.png)
 
 | bathroom1 | attic | bedroom1 |
 |:---------:|:-----:|:--------:|
@@ -98,34 +91,15 @@ Update the `SCENES` dict at the top of the script with your dataset paths before
 ## Observations
 
 **More frames helps structurally but not always metrically.** SSIM climbs consistently
-across all scenes. PSNR tells a different story — `bathroom1` (a dark scene) improves all
-the way to batch=1024, while `attic` and `bedroom1` peak around batch=256 and then
-decline slightly. In brighter scenes, accumulating too many frames causes bright regions
-to dominate normalization, hurting per-pixel accuracy even as structure improves.
+across all scenes. PSNR tells a different story — dark scenes (bathroom1, bedroom1)
+improve steadily with more frames, while scenes with large bright regions (attic, 000023)
+peak around batch=256–512 then decline slightly. Too many frames causes bright areas to
+dominate normalization, hurting per-pixel accuracy even as structure improves.
 
-**The ceiling is low.** Best PSNR stays under 21.6 dB, SSIM under 0.46. Edges, textures,
-and fine detail remain blurry regardless of frame count. This is the fundamental limit of
-summation without a learned prior, and the target Phase 2 onwards must beat.
+**The ceiling is low.** Best PSNR stays under 21.6 dB on original scenes and under
+16.8 dB on the harder new scenes. Edges, textures, and fine detail remain blurry
+regardless of frame count — the fundamental limit of summation without a learned prior.
 
 ---
 
 ← [Back](../README.md) | [Phase 2 →](../phase2_baseline_cnn/README.md)
-
----
-
-## Results on Common Evaluation Scenes
-
-These 3 scenes are used across all phases for direct comparison.
-
-| Scene | Best Batch | PSNR ↑ | SSIM ↑ |
-|:-----:|:----------:|:------:|:------:|
-| 000015 | 128 | 10.67 dB | 0.1409 |
-| 000023 | 512 | 12.58 dB | 0.3174 |
-| 000030 | 1024 | 16.71 dB | 0.3765 |
-| **Avg** | | **13.32 dB** | **0.2783** |
-
-![Metric curves — new scenes](results/metric_curves_new_samples.png)
-
-| 000015 | 000023 | 000030 |
-|:------:|:------:|:------:|
-| ![](results/comparison_000015.png) | ![](results/comparison_000023.png) | ![](results/comparison_000030.png) |
