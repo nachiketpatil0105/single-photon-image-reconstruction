@@ -1,6 +1,6 @@
 # Phase 2 - Baseline CNN
 
-← [Phase 1](../phase1_naive/README.md) | [Back](../README.md) | [Phase 3 →](../phase3_unet/README.md)
+← [Phase 1](../phase1_naive/README.md) | [Back](../README.md) | [Phase 3 ->](../phase3_unet/README.md)
 
 First trained model. All 128 SPC frames are stacked into 384 input channels and passed
 through a flat 8-layer CNN at full resolution. No downsampling, no skip connections.
@@ -16,9 +16,9 @@ the network learn how to combine them. Each frame contributes 3 channels (RGB), 
 
 ```
 .npy (1024, 800, 100, 3)
-  → slice last 128 frames    (128, 800, 100, 3)
-  → unpackbits axis=2        (128, 800, 800, 3)
-  → reshape + transpose      (384, 800, 800)     ← CNN input
+  -> slice last 128 frames    (128, 800, 100, 3)
+  -> unpackbits axis=2        (128, 800, 800, 3)
+  -> reshape + transpose      (384, 800, 800)     ← CNN input
 ```
 
 ---
@@ -28,8 +28,8 @@ the network learn how to combine them. Each frame contributes 3 channels (RGB), 
 8 convolutional layers, all 3×3 with padding=1 (spatial resolution preserved throughout).
 
 ```
-(384, 800, 800) → Conv+ReLU ×7 → Conv+Sigmoid → (3, 800, 800)
-Channel progression: 384→128→256→256→128→64→32→16→3
+(384, 800, 800) -> Conv+ReLU ×7 -> Conv+Sigmoid -> (3, 800, 800)
+Channel progression: 384->128->256->256->128->64->32->16->3
 ```
 
 ~1.72M parameters.
@@ -131,4 +131,4 @@ lighting. That is exactly what UNet's skip connections address in Phase 3.
 
 ---
 
-← [Phase 1](../phase1_naive/README.md) | [Back](../README.md) | [Phase 3 →](../phase3_unet/README.md)
+← [Phase 1](../phase1_naive/README.md) | [Back](../README.md) | [Phase 3 ->](../phase3_unet/README.md)

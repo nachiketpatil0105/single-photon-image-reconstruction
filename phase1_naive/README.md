@@ -1,6 +1,6 @@
 # Phase 1 - Naive Summation Baseline
 
-← [Back](../README.md) | [Phase 2 →](../phase2_baseline_cnn/README.md)
+← [Back](../README.md) | [Phase 2 ->](../phase2_baseline_cnn/README.md)
 
 No learning, no parameters. Binary photon frames are summed and normalized to recover
 approximate scene intensity. We sweep batch sizes from 16 to 1024 to find where
@@ -16,10 +16,10 @@ frames, and normalize.
 
 ```
 .npy (1024, 800, 100, 3)
-  → slice last B frames    (B, 800, 100, 3)
-  → unpackbits axis=2      (B, 800, 800, 3)
-  → sum across frames      (800, 800, 3)
-  → normalize to [0, 1]
+  -> slice last B frames    (B, 800, 100, 3)
+  -> unpackbits axis=2      (B, 800, 800, 3)
+  -> sum across frames      (800, 800, 3)
+  -> normalize to [0, 1]
 ```
 
 ---
@@ -47,7 +47,7 @@ python naive_reconstruction.py
 
 Update the `SCENES` dict at the top of the script with your dataset paths before running.
 
-**Output** → `results/comparison_{scene}.png`, `results/metric_curves.png`, `results/metrics.json`
+**Output** -> `results/comparison_{scene}.png`, `results/metric_curves.png`, `results/metrics.json`
 
 ---
 
@@ -102,4 +102,4 @@ regardless of frame count - the fundamental limit of summation without a learned
 
 ---
 
-← [Back](../README.md) | [Phase 2 →](../phase2_baseline_cnn/README.md)
+← [Back](../README.md) | [Phase 2 ->](../phase2_baseline_cnn/README.md)

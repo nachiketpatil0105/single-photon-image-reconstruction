@@ -1,6 +1,6 @@
 # Phase 3 - UNet
 
-← [Phase 2](../phase2_baseline_cnn/README.md) | [Back](../README.md) | [Phase 4 →](../phase4_resunet_attention/README.md)
+← [Phase 2](../phase2_baseline_cnn/README.md) | [Back](../README.md) | [Phase 4 ->](../phase4_resunet_attention/README.md)
 
 Encoder-decoder with skip connections. The encoder compresses spatial resolution to build
 global scene understanding; skip connections feed spatial detail directly to the decoder
@@ -13,10 +13,10 @@ at each level. Also introduces a significantly upgraded training pipeline over P
 | | Phase 2 | Phase 3 |
 |--|---------|---------|
 | Architecture | Flat CNN, single scale | UNet, 3 encoder levels + bottleneck |
-| Skip connections | None | Encoder → decoder at each level |
+| Skip connections | None | Encoder -> decoder at each level |
 | Parameters | ~1.7M | ~31M |
 | Loss | L1 + SSIM | Charbonnier + MS-SSIM + VGG |
-| LR schedule | Fixed 1e-4 | Cosine annealing (1e-4 → 1e-6) |
+| LR schedule | Fixed 1e-4 | Cosine annealing (1e-4 -> 1e-6) |
 | Precision | FP32 | Mixed precision (FP16) |
 | Augmentation | None | Flips, rotations, 512×512 random crop |
 | Validation | None | 80 / 10 / 10 train/val/test split |
@@ -28,13 +28,13 @@ at each level. Also introduces a significantly upgraded training pipeline over P
 
 ```
 Input (384, 800, 800)
-  enc1 → pool → enc2 → pool → enc3 → pool → bottleneck
+  enc1 -> pool -> enc2 -> pool -> enc3 -> pool -> bottleneck
                                               ↓
   dec3 ← up + cat(enc3) ← dec2 ← up + cat(enc2) ← dec1 ← up + cat(enc1)
   ↓
-  Conv1×1 → (3, 800, 800)
+  Conv1×1 -> (3, 800, 800)
 
-Channels: 384→128→256→512→1024 (bottleneck) →512→256→128→3
+Channels: 384->128->256->512->1024 (bottleneck) ->512->256->128->3
 ```
 
 Upsampling via learned `ConvTranspose2d`. ~31M parameters.
@@ -62,7 +62,7 @@ large surfaces and fine texture.
 | Parameter | Value |
 |-----------|-------|
 | Optimizer | Adam |
-| Learning Rate | 1e-4 → 1e-6 cosine annealing |
+| Learning Rate | 1e-4 -> 1e-6 cosine annealing |
 | Epochs | 150 |
 | Batch Size | 1 |
 | Gradient Clipping | max norm 1.0 |
@@ -161,4 +161,4 @@ attention gates in Phase 4.
 
 ---
 
-← [Phase 2](../phase2_baseline_cnn/README.md) | [Back](../README.md) | [Phase 4 →](../phase4_resunet_attention/README.md)
+← [Phase 2](../phase2_baseline_cnn/README.md) | [Back](../README.md) | [Phase 4 ->](../phase4_resunet_attention/README.md)

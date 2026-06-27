@@ -14,9 +14,9 @@ supervision. Trained on 1850 samples on a dedicated GPU server.
 |--|---------|---------|
 | Conv blocks | Plain Conv + ReLU | Residual (GroupNorm + SiLU + residual path) |
 | Encoder depth | 3 levels | 5 levels |
-| Bottleneck | 1024ch, single block | 1024→2048→2048, double block |
+| Bottleneck | 1024ch, single block | 1024->2048->2048, double block |
 | Skip connections | Raw concatenation | Guided attention gates |
-| Deep supervision | None | Aux head at dec2, annealed 0.4→0 |
+| Deep supervision | None | Aux head at dec2, annealed 0.4->0 |
 | Loss | Charb + MS-SSIM + VGG | + **Edge loss** |
 | Precision | FP16 | BF16 |
 | LR schedule | Cosine annealing | Cosine annealing **with warm restarts** (T₀=5) |
@@ -30,25 +30,25 @@ supervision. Trained on 1850 samples on a dedicated GPU server.
 
 ```
 Input (96, 512, 512)
-  input_proj: 96→128
+  input_proj: 96->128
 
   Encoder (ResConvBlock + MaxPool)
-    enc1: 128→128   (512×512) → e1
-    enc2: 128→256   (256×256) → e2
-    enc3: 256→512   (128×128) → e3
-    enc4: 512→1024  ( 64×64)  → e4
-    enc5: 1024→1024 ( 32×32)  → e5
+    enc1: 128->128   (512×512) -> e1
+    enc2: 128->256   (256×256) -> e2
+    enc3: 256->512   (128×128) -> e3
+    enc4: 512->1024  ( 64×64)  -> e4
+    enc5: 1024->1024 ( 32×32)  -> e5
 
-  Bottleneck: 1024→2048→2048  (32×32)
+  Bottleneck: 1024->2048->2048  (32×32)
 
   Decoder (ConvTranspose ↑2 + GuidedAttentionGate + concat)
-    dec0: 2048→1024  ( 64×64)   attn(e5)
-    dec1: 1024→512   (128×128)  attn(e4)
-    dec2:  512→256   (256×256)  attn(e3)  ← aux head
-    dec3:  256→128   (512×512)  attn(e2)
-    dec4:  128→128   (512×512)  attn(e1)
+    dec0: 2048->1024  ( 64×64)   attn(e5)
+    dec1: 1024->512   (128×128)  attn(e4)
+    dec2:  512->256   (256×256)  attn(e3)  ← aux head
+    dec3:  256->128   (512×512)  attn(e2)
+    dec4:  128->128   (512×512)  attn(e1)
 
-  Output: Conv1×1  128→3
+  Output: Conv1×1  128->3
 ```
 
 ~237M parameters.
@@ -188,7 +188,7 @@ epoch 70 checkpoint (best train SSIM = 0.9145).
 
 ## Observations
 
-The P3→P4 gain (+1.38 dB) is smaller than P2→P3 (+3.72 dB), which is expected - each
+The P3->P4 gain (+1.38 dB) is smaller than P2->P3 (+3.72 dB), which is expected - each
 phase targets harder residual errors left by the previous one.
 
 Per-sample spread is large (28.21 to 37.43 dB). Sample 000015 scores significantly lower,
@@ -198,7 +198,7 @@ highly capable on structured scenes.
 
 The training curves show the warm restart fingerprint - SSIM oscillates with period 5,
 rising within each cosine cycle then dipping slightly on restart. The overall trend is
-cleanly upward (0.74 → 0.91) with no plateau at epoch 70, suggesting further gains are
+cleanly upward (0.74 -> 0.91) with no plateau at epoch 70, suggesting further gains are
 possible with more training.
 
 Deep supervision worked as designed. The aux Charbonnier loss improved from 0.0556 at
