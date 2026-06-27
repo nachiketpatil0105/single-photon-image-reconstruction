@@ -1,4 +1,4 @@
-# Phase 4 — ResUNet with Guided Attention Gates
+# Phase 4 - ResUNet with Guided Attention Gates
 
 ← [Phase 3](../phase3_unet/README.md) | [Back](../README.md)
 
@@ -26,7 +26,7 @@ supervision. Trained on 1850 samples on a dedicated GPU server.
 
 ---
 
-## Architecture — `SimCNN`
+## Architecture - `SimCNN`
 
 ```
 Input (96, 512, 512)
@@ -57,7 +57,7 @@ Input (96, 512, 512)
 
 ## Key Design Decisions
 
-**`ConvBlock` — Residual**
+**`ConvBlock` - Residual**
 Each block computes `act(conv(x) + proj(x))`. GroupNorm (8 groups) replaces BatchNorm
 because batch size 2 makes BN statistics unreliable. SiLU replaces ReLU for smoother
 gradients.
@@ -70,7 +70,7 @@ suppressed before concatenation.
 
 **Deep supervision + annealing**
 Auxiliary 1×1 conv at dec2 projected to 3 channels. Weight decays linearly from 0.4
-to 0 over 70 epochs — forces intermediate features to be meaningful early, contributes
+to 0 over 70 epochs - forces intermediate features to be meaningful early, contributes
 nothing to the gradient by the end.
 
 **Edge Loss**
@@ -82,7 +82,7 @@ BF16 has the same exponent range as FP32 (vs FP16's narrower range). At 237M par
 and 2048-channel bottleneck, this prevents overflow/underflow in the large layers.
 
 **GPU augmentation**
-Flips and rotations applied after moving tensors to device — faster than CPU augmentation
+Flips and rotations applied after moving tensors to device - faster than CPU augmentation
 for large tensors at batch size 2.
 
 ---
@@ -124,13 +124,13 @@ Loss = 0.5  × Charbonnier
 |-----------------|-------------|
 | `SPCDataset` | Loads preprocessed .pt tensors, slices last 96 input channels |
 | `gpu_augment(x, y)` | Random flips and rotations on GPU after device transfer |
-| `CharbonnierLoss` | `sqrt((pred - target)² + ε²)` — smooth, stable L1 replacement |
+| `CharbonnierLoss` | `sqrt((pred - target)² + ε²)` - smooth, stable L1 replacement |
 | `VGGPerceptualLoss` | Frozen VGG16, L1 at relu1_2 / relu2_2 / relu3_3 |
-| `EdgeLoss` | Finite-difference gradient loss — penalizes edge blurring |
+| `EdgeLoss` | Finite-difference gradient loss - penalizes edge blurring |
 | `ConvBlock` | Two Conv3×3 + GroupNorm + SiLU with residual projection |
 | `GuidedAttentionGate` | Computes spatial attention from skip + decoder gate, filters skip |
 | `Down` / `Up` | MaxPool+ConvBlock / ConvTranspose+AttentionGate+ConvBlock |
-| `SimCNN` | Full model — returns `(main, aux)` during training, `main` during eval |
+| `SimCNN` | Full model - returns `(main, aux)` during training, `main` during eval |
 | `compute_psnr(pred, target)` | Inline PSNR from MSE, used during training loop |
 
 ---
@@ -188,7 +188,7 @@ epoch 70 checkpoint (best train SSIM = 0.9145).
 
 ## Observations
 
-The P3→P4 gain (+1.38 dB) is smaller than P2→P3 (+3.72 dB), which is expected — each
+The P3→P4 gain (+1.38 dB) is smaller than P2→P3 (+3.72 dB), which is expected - each
 phase targets harder residual errors left by the previous one.
 
 Per-sample spread is large (28.21 to 37.43 dB). Sample 000015 scores significantly lower,
@@ -196,13 +196,13 @@ likely a scene with complex lighting or high-frequency texture that even guided 
 can't fully recover. Samples 000023 and 000030 exceed 36 dB, showing the model is
 highly capable on structured scenes.
 
-The training curves show the warm restart fingerprint — SSIM oscillates with period 5,
+The training curves show the warm restart fingerprint - SSIM oscillates with period 5,
 rising within each cosine cycle then dipping slightly on restart. The overall trend is
 cleanly upward (0.74 → 0.91) with no plateau at epoch 70, suggesting further gains are
 possible with more training.
 
 Deep supervision worked as designed. The aux Charbonnier loss improved from 0.0556 at
-epoch 1 to 0.0201 at epoch 70 despite its weight decaying to zero — intermediate features
+epoch 1 to 0.0201 at epoch 70 despite its weight decaying to zero - intermediate features
 became genuinely more informative rather than being forced by a strong signal.
 
 ---
