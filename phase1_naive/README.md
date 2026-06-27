@@ -1,4 +1,4 @@
-# Phase 1 — Naive Summation Baseline
+# Phase 1 - Naive Summation Baseline
 
 ← [Back](../README.md) | [Phase 2 →](../phase2_baseline_cnn/README.md)
 
@@ -64,7 +64,7 @@ Used across all phases for direct comparison. Numbers shown at best batch size p
 | 000030 | 1024 | 0.1460 | 16.71 dB | 0.3765 |
 | **Avg** | | | **13.32 dB** | **0.2783** |
 
-![Metric curves — new scenes](results/metric_curves_new_samples.png)
+![Metric curves - new scenes](results/metric_curves_new_samples.png)
 
 | 000015 | 000023 | 000030 |
 |:------:|:------:|:------:|
@@ -80,7 +80,7 @@ Used across all phases for direct comparison. Numbers shown at best batch size p
 | attic     | 256  | 21.55 dB | 0.4142 |
 | bedroom1  | 256  | 12.00 dB | 0.2287 |
 
-![Metric curves — original scenes](results/metric_curves.png)
+![Metric curves - original scenes](results/metric_curves.png)
 
 | bathroom1 | attic | bedroom1 |
 |:---------:|:-----:|:--------:|
@@ -91,14 +91,14 @@ Used across all phases for direct comparison. Numbers shown at best batch size p
 ## Observations
 
 **More frames helps structurally but not always metrically.** SSIM climbs consistently
-across all scenes. PSNR tells a different story — dark scenes (bathroom1, bedroom1)
+across all scenes. PSNR tells a different story - dark scenes (bathroom1, bedroom1)
 improve steadily with more frames, while scenes with large bright regions (attic, 000023)
 peak around batch=256–512 then decline slightly. Too many frames causes bright areas to
 dominate normalization, hurting per-pixel accuracy even as structure improves.
 
 **The ceiling is low.** Best PSNR stays under 21.6 dB on original scenes and under
 16.8 dB on the harder new scenes. Edges, textures, and fine detail remain blurry
-regardless of frame count — the fundamental limit of summation without a learned prior.
+regardless of frame count - the fundamental limit of summation without a learned prior.
 
 ---
 

@@ -1,4 +1,4 @@
-# Phase 2 — Baseline CNN
+# Phase 2 - Baseline CNN
 
 ← [Phase 1](../phase1_naive/README.md) | [Back](../README.md) | [Phase 3 →](../phase3_unet/README.md)
 
@@ -23,7 +23,7 @@ the network learn how to combine them. Each frame contributes 3 channels (RGB), 
 
 ---
 
-## Architecture — `SimCNN`
+## Architecture - `SimCNN`
 
 8 convolutional layers, all 3×3 with padding=1 (spatial resolution preserved throughout).
 
@@ -42,7 +42,7 @@ Channel progression: 384→128→256→256→128→64→32→16→3
 Loss = 0.5 × L1  +  0.5 × (1 − SSIM)
 ```
 
-L1 alone produces blurry outputs — SSIM adds structural supervision. Adam, lr=1e-4,
+L1 alone produces blurry outputs - SSIM adds structural supervision. Adam, lr=1e-4,
 50 epochs, sample-by-sample (batch size 1). 45 train / 5 test samples.
 
 ---
@@ -54,7 +54,7 @@ L1 alone produces blurry outputs — SSIM adds structural supervision. Adam, lr=
 | Function / Class | What it does |
 |-----------------|-------------|
 | `unpack_last_frame(npy_path)` | Loads SPC data, unpacks bits, reshapes to (800, 800, 384), normalizes |
-| `SimCNN` | The model — 8 conv layers, expand then contract, Sigmoid output |
+| `SimCNN` | The model - 8 conv layers, expand then contract, Sigmoid output |
 | `save_comparison(...)` | 3-panel figure: Input \| Model Output \| Ground Truth |
 | `save_loss_curve(epoch_losses)` | Plots loss vs epoch |
 | `print_summary(results)` | Prints per-sample and average PSNR/SSIM to terminal |
@@ -118,13 +118,13 @@ Used across all phases for direct comparison.
 
 ## Observations
 
-The jump from Phase 1 is large (+13.15 dB on common scenes) — preserving all 128 frames
+The jump from Phase 1 is large (+13.15 dB on common scenes) - preserving all 128 frames
 as separate channels and learning to combine them far outperforms any fixed summation rule.
 
 The loss curve is still declining at epoch 50, meaning the model hasn't fully converged.
 These numbers are a lower bound on what this architecture can achieve.
 
-PSNR varies significantly across scenes — 000015 scores only 20.92 dB while 000030 reaches
+PSNR varies significantly across scenes - 000015 scores only 20.92 dB while 000030 reaches
 30.91 dB. The flat CNN processes every spatial location identically with no mechanism for
 multi-scale reasoning, which hurts on complex scenes with fine texture and challenging
 lighting. That is exactly what UNet's skip connections address in Phase 3.

@@ -1,4 +1,4 @@
-# Phase 3 — UNet
+# Phase 3 - UNet
 
 ← [Phase 2](../phase2_baseline_cnn/README.md) | [Back](../README.md) | [Phase 4 →](../phase4_resunet_attention/README.md)
 
@@ -24,7 +24,7 @@ at each level. Also introduces a significantly upgraded training pipeline over P
 
 ---
 
-## Architecture — `UNetBasic`
+## Architecture - `UNetBasic`
 
 ```
 Input (384, 800, 800)
@@ -47,12 +47,12 @@ Upsampling via learned `ConvTranspose2d`. ~31M parameters.
 Loss = 0.25 × Charbonnier  +  0.50 × (1 − MS-SSIM)  +  0.25 × VGG Perceptual
 ```
 
-**Charbonnier** — smooth L1, differentiable at zero, more stable near convergence.
+**Charbonnier** - smooth L1, differentiable at zero, more stable near convergence.
 
-**MS-SSIM** — structural similarity at multiple scales; more robust for scenes with both
+**MS-SSIM** - structural similarity at multiple scales; more robust for scenes with both
 large surfaces and fine texture.
 
-**VGG Perceptual** — L1 distance between VGG16 feature maps at relu1_2 / relu2_2 / relu3_3
+**VGG Perceptual** - L1 distance between VGG16 feature maps at relu1_2 / relu2_2 / relu3_3
 (weights 0.2 / 0.3 / 0.5). Pushes the model toward perceptually sharp outputs.
 
 ---
@@ -79,13 +79,13 @@ large surfaces and fine texture.
 | Function / Class | What it does |
 |-----------------|-------------|
 | `unpack_last_frame(npy_path)` | Memory-maps .npy, unpacks bits, reshapes to (384, 800, 800) |
-| `SPCDataset` | PyTorch Dataset — augmentation for train, full resolution for val/test |
+| `SPCDataset` | PyTorch Dataset - augmentation for train, full resolution for val/test |
 | `CharbonnierLoss` | Smooth L1: `sqrt((pred - target)² + ε²)` |
 | `VGGPerceptualLoss` | Frozen VGG16 feature extractor, L1 at three layers |
 | `UNetBasic` | Encoder-decoder with ConvTranspose2d upsampling and skip connections |
 | `compute_psnr(pred, target)` | Inline PSNR from MSE, used during training loop |
 | `save_comparison(...)` | 3-panel figure: Input \| Model Output \| Ground Truth |
-| `save_training_curves(log_csv)` | 3-panel plot: Loss, SSIM, PSNR — train and val |
+| `save_training_curves(log_csv)` | 3-panel plot: Loss, SSIM, PSNR - train and val |
 | `print_summary(results)` | Prints per-sample and average PSNR/SSIM to terminal |
 
 ---
@@ -152,11 +152,11 @@ evaluation scenes, ultramodern (a scene with complex geometry and fine texture) 
 most from multi-scale feature reuse.
 
 Train and val curves stay close throughout (final gap: 0.0002 SSIM), meaning augmentation
-was effective despite 31M parameters. Val PSNR slightly exceeds train PSNR at the end —
+was effective despite 31M parameters. Val PSNR slightly exceeds train PSNR at the end -
 training uses 512×512 crops which give less context per sample than full 800×800 val images.
 
 `wooden-staircase` has the lowest SSIM at 0.7616 despite decent PSNR (31.77 dB).
-Repetitive fine texture is hard for uniform skip-concatenation to handle — motivating the
+Repetitive fine texture is hard for uniform skip-concatenation to handle - motivating the
 attention gates in Phase 4.
 
 ---
