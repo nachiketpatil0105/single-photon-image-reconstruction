@@ -51,14 +51,13 @@ L1 alone produces blurry outputs — SSIM adds structural supervision. Adam, lr=
 
 **`cnn_reconstruction.py`**
 
-| Function | What it does |
-|----------|-------------|
-| `load_input(npy_path)` | Loads SPC data, unpacks bits, reshapes to (384, 800, 800), normalizes |
-| `load_target(png_path)` | Loads ground truth PNG as (3, 800, 800) float in [0, 1] |
+| Function / Class | What it does |
+|-----------------|-------------|
+| `unpack_last_frame(npy_path)` | Loads SPC data, unpacks bits, reshapes to (800, 800, 384), normalizes |
 | `SimCNN` | The model — 8 conv layers, expand then contract, Sigmoid output |
-| `train(...)` | Training loop — combined loss, backprop, returns epoch loss history |
-| `evaluate(...)` | Inference on test set, scikit-image PSNR/SSIM, saves comparison figures |
+| `save_comparison(...)` | 3-panel figure: Input \| Model Output \| Ground Truth |
 | `save_loss_curve(epoch_losses)` | Plots loss vs epoch |
+| `print_summary(results)` | Prints per-sample and average PSNR/SSIM to terminal |
 
 ---
 

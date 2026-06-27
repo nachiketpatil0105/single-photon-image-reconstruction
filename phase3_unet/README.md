@@ -78,15 +78,15 @@ large surfaces and fine texture.
 
 | Function / Class | What it does |
 |-----------------|-------------|
-| `unpack_spc(npy_path)` | Memory-maps .npy, unpacks bits, reshapes to (384, 800, 800) |
+| `unpack_last_frame(npy_path)` | Memory-maps .npy, unpacks bits, reshapes to (384, 800, 800) |
 | `SPCDataset` | PyTorch Dataset — augmentation for train, full resolution for val/test |
 | `CharbonnierLoss` | Smooth L1: `sqrt((pred - target)² + ε²)` |
 | `VGGPerceptualLoss` | Frozen VGG16 feature extractor, L1 at three layers |
 | `UNetBasic` | Encoder-decoder with ConvTranspose2d upsampling and skip connections |
-| `train_one_epoch(...)` | One pass — mixed precision, grad clip, all loss components |
-| `validate(...)` | Val pass under `no_grad`, returns loss/SSIM/PSNR |
-| `evaluate_test(...)` | Loads best checkpoint, runs inference, computes scikit-image metrics |
+| `compute_psnr(pred, target)` | Inline PSNR from MSE, used during training loop |
+| `save_comparison(...)` | 3-panel figure: Input \| Model Output \| Ground Truth |
 | `save_training_curves(log_csv)` | 3-panel plot: Loss, SSIM, PSNR — train and val |
+| `print_summary(results)` | Prints per-sample and average PSNR/SSIM to terminal |
 
 ---
 

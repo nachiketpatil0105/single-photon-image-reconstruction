@@ -26,7 +26,7 @@ supervision. Trained on 1850 samples on a dedicated GPU server.
 
 ---
 
-## Architecture — `ResUNetAttention`
+## Architecture — `SimCNN`
 
 ```
 Input (96, 512, 512)
@@ -122,7 +122,6 @@ Loss = 0.5  × Charbonnier
 
 | Function / Class | What it does |
 |-----------------|-------------|
-| `collect_paths(npy_root, img_root)` | Walks paired `train_*` folders, returns matched .pt file lists |
 | `SPCDataset` | Loads preprocessed .pt tensors, slices last 96 input channels |
 | `gpu_augment(x, y)` | Random flips and rotations on GPU after device transfer |
 | `CharbonnierLoss` | `sqrt((pred - target)² + ε²)` — smooth, stable L1 replacement |
@@ -131,8 +130,8 @@ Loss = 0.5  × Charbonnier
 | `ConvBlock` | Two Conv3×3 + GroupNorm + SiLU with residual projection |
 | `GuidedAttentionGate` | Computes spatial attention from skip + decoder gate, filters skip |
 | `Down` / `Up` | MaxPool+ConvBlock / ConvTranspose+AttentionGate+ConvBlock |
-| `ResUNetAttention` | Full model — returns `(main, aux)` during training, `main` during eval |
-| `train(...)` | Full training loop — BF16, deep supervision annealing, CSV logging, TensorBoard |
+| `SimCNN` | Full model — returns `(main, aux)` during training, `main` during eval |
+| `compute_psnr(pred, target)` | Inline PSNR from MSE, used during training loop |
 
 ---
 

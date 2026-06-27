@@ -30,11 +30,11 @@ frames, and normalize.
 
 | Function | What it does |
 |----------|-------------|
-| `reconstruct(npy_path, batch_size)` | Loads, unpacks, sums, and normalizes one scene at a given batch size |
-| `evaluate_scene(npy_path, gt_path)` | Runs reconstruction for all batch sizes and computes RMSE, PSNR, SSIM |
-| `save_comparison(...)` | 3-panel figure: Ground Truth \| Worst \| Best reconstruction |
+| `load_and_unpack(npy_path, batch_size)` | Loads, unpacks, sums, and normalizes one scene at a given batch size |
+| `evaluate_batch_sizes(npy_path, gt_path, batch_sizes)` | Runs reconstruction for all batch sizes and computes RMSE, PSNR, SSIM |
+| `show_comparisons(...)` | 3-panel figure: Ground Truth \| Worst \| Best reconstruction |
 | `save_metric_curves(all_metrics)` | PSNR and SSIM vs batch size across all scenes |
-| `print_summary(all_metrics)` | Prints metric table to terminal and saves `metrics.json` |
+| `print_metrics(results)` | Prints metric table to terminal |
 
 ---
 
